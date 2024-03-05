@@ -1,7 +1,0 @@
-/var/spool/sge/scc-c06/job_scripts/5288140: line 6: module: command not found
-/var/spool/sge/scc-c06/job_scripts/5288140: line 7: module: command not found
-error: a value is required for '--include-introns <true|false>' but none was supplied
-  [possible values: true, false]
-
-For more information, try '--help'.
-/var/spool/sge/scc-c06/job_scripts/5288140: line 16: --expect-cells: command not found
