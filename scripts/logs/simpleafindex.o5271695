@@ -1,0 +1,12 @@
+found `piscem` in the PATH at /projectnb/mccall/sbandya/.conda/envs/af/bin/piscem
+found `salmon` in the PATH at /projectnb/mccall/sbandya/.conda/envs/af/bin/salmon
+found `alevin-fry` in the PATH at /projectnb/mccall/sbandya/.conda/envs/af/bin/alevin-fry
+[2m2024-03-04T20:40:49.727912Z[0m [32m INFO[0m [2msimpleaf::simpleaf_commands::indexing[0m[2m:[0m preparing to make reference with roers
+[2m2024-03-04T20:40:51.505871Z[0m [32m INFO[0m [2mgrangers::reader::gtf[0m[2m:[0m Finished parsing the input file. Found 4 comments and 564802 records.
+[2m2024-03-04T20:40:52.169419Z[0m [32m INFO[0m [2mroers[0m[2m:[0m Built the Grangers object for 564802 records
+[2m2024-03-04T20:40:52.429476Z[0m [33m WARN[0m [2mroers[0m[2m:[0m Found missing gene_id and/or gene_name; Imputing. If both missing, will impute using transcript_id; Otherwise, will impute using the existing one.
+[2m2024-03-04T20:40:52.437578Z[0m [32m INFO[0m [2mroers[0m[2m:[0m Proceed 195484 exon records from 41200 transcripts
+[2m2024-03-04T20:40:58.568153Z[0m [32m INFO[0m [2mroers[0m[2m:[0m Processing 154284 intronic records
+[2m2024-03-04T20:41:00.633298Z[0m [32m INFO[0m [2mroers[0m[2m:[0m Done!
+[2m2024-03-04T20:41:00.813654Z[0m [32m INFO[0m [2msimpleaf::simpleaf_commands::indexing[0m[2m:[0m piscem build cmd : /projectnb/mccall/sbandya/.conda/envs/af/bin/piscem build -k 31 -m 19 -o /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/alevinfry/index/piscem_idx -s /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/alevinfry/ref/roers_ref.fa --seed 1 --threads 10
+[2m2024-03-04T20:49:57.979249Z[0m [32m INFO[0m [2msimpleaf::utils::prog_utils[0m[2m:[0m command returned successfully (exit status: 0)

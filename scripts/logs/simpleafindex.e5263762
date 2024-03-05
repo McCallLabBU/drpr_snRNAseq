@@ -1,0 +1,4 @@
+/var/spool/sge/scc-c07/job_scripts/5263762: line 6: module: command not found
+/var/spool/sge/scc-c07/job_scripts/5263762: line 8: conda: command not found
+/var/spool/sge/scc-c07/job_scripts/5263762: line 10: simpleaf: command not found
+/var/spool/sge/scc-c07/job_scripts/5263762: line 16: simpleaf: command not found
