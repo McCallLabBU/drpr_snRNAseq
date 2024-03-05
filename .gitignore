@@ -2,6 +2,9 @@ data/*
 analysis/*
 reference/*
 scripts/logs/*
+scripts/archive/*
+scripts/cache/*
+
 
 .DS_Store
 
