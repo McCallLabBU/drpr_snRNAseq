@@ -4,6 +4,7 @@ reference/*
 scripts/logs/*
 scripts/archive/*
 scripts/cache/*
+archive/*
 
 
 .DS_Store
