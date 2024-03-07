@@ -1,99 +1,82 @@
+####################################################################################
+# Run SCTK-QC on drprnull42d and w111842d cells separately 
+# Estimate per-cell QC metrics, ambient RNA correction, and doublet detection using SCTK-QC
+# Outputs AnnData .h5ad files for both samples separately
+####################################################################################
+
+
 library(SingleCellExperiment)
 library(tidyverse)
 library(singleCellTK)
-#BiocManager::install("singleCellTK")
+library(zellkonverter)
 
+library(SoupX)
 
+library(reticulate)
+adata <- import("anndata")
+scrublet <- import("scrublet")
 
 ## Read preprocessed h5ad file as SCE 
 
 inputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/cellranger/"
-
-sce <- importCellRangerV3(
-  cellRangerDirs = c(inputdir,inputdir),
-  sampleDirs = c("drprnull_42D","w1118_42D"),
-  sampleNames = c("drprnull_42D","w1118_42D"),
-  dataType = "filtered")
+outputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/sctk_qc/"
+dir.create(outputdir,showWarnings = FALSE)
 
 
-#drprnull_42d <- importAnnData(sampleDirs = "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/preprocess",
-#                     sampleNames = "drprnull_42D")
 
-  cellRangerDirs = c(inputdir,inputdir),
-  sampleDirs = c("drprnull_42D","w1118_42D"),
-  sampleNames = c("drprnull_42D","w1118_42D"),
-  dataType = "filtered")
+drprnull_42d <- importCellRangerV3(
+    cellRangerDirs = inputdir,
+    sampleDirs = "drprnull_42D",
+    sampleNames = "drprnull_42D",
+    dataType = "filtered")
 
-samples <- colData(sce)$sample
 
-#sce <- getUMAP(inSCE = sce, useAssay = "counts", logNorm = TRUE, sample = samples)
+drprnull_42d_samples <- colData(drprnull_42d)$sample
+
 
 set.seed(12345)
-sce <- runCellQC(sce, 
-                 algorithms = c("QCMetrics", "scrublet", "doubletFinder", "decontX", "soupX"), 
-                 sample = samples)
+drprnull_42d <- runCellQC(drprnull_42d, 
+                 algorithms = c("QCMetrics","doubletFinder", "decontX","cxds", "bcds", "cxds_bcds_hybrid"), 
+                 sample = drprnull_42d_samples)
 
-exportSCEtoAnnData(
-  sce,
-  useAssay = "counts",
-  outputDir = inputdir,
-  prefix = "combined",
-  overwrite = TRUE,
-  compression = "None",
-  compressionOpts = NULL,
-  forceDense = FALSE
+
+writeH5AD(
+  drprnull_42d,
+  paste0(outputdir,"drprnull_42d.h5ad"),
+  X_name = "counts",
+  skip_assays = FALSE,
+  compression = "none"
 )
 
-sce <- sampleSummaryStats(sce, sample = samples, simple = FALSE)
-getSampleSummaryStatsTable(sce, statsName = "qc_table")
 
-decontxResults <- plotDecontXResults(
-  inSCE = sce, sample = colData(sce)$sample, 
-  reducedDimName = "decontX_drprnull_42D_UMAP", combinePlot = "all",
-  titleSize = 8,
-  axisLabelSize = 8,
-  axisSize = 10,
-  legendSize = 5,
-  legendTitleSize = 7,
-  relWidths = c(0.5, 1, 1),
-  sampleRelWidths = c(0.5, 1, 1),
-  labelSamples = TRUE,
-  labelClusters = FALSE
+##### QC W1118_42sd
+w1118_42d <- importCellRangerV3(
+  cellRangerDirs = inputdir,
+  sampleDirs = "w1118_42D",
+  sampleNames = "w1118_42D",
+  dataType = "filtered")
+
+
+w1118_42d_samples <- colData(w1118_42d)$sample
+
+
+set.seed(12345)
+w1118_42d <- runCellQC(w1118_42d, 
+                          algorithms = c("QCMetrics","doubletFinder", "decontX","cxds", "bcds", "cxds_bcds_hybrid"), 
+                          sample = w1118_42d_samples)
+
+
+writeH5AD(
+  w1118_42d,
+  paste0(outputdir,"w1118_42d.h5ad"),
+  X_name = "counts",
+  skip_assays = FALSE,
+  compression = "none"
 )
 
-soupxResults <- plotSoupXResults(
-  inSCE = sce, sample = colData(sce)$sample, 
-  reducedDimName = "SoupX_UMAP_drprnull_42D", combinePlot = "all",
-  titleSize = 8,
-  axisLabelSize = 8,
-  axisSize = 10,
-  legendSize = 5,
-  legendTitleSize = 7,
-  labelClusters = FALSE
-)
-
-soupxResults
-doubletFinderResults <- plotDoubletFinderResults(
-  inSCE = sce,
-  sample = colData(sce)$sample, 
-  reducedDimName = "doubletFinder_UMAP",
-  combinePlot = "all",
-  titleSize = 13,
-  axisLabelSize = 13,
-  axisSize = 13,
-  legendSize = 13,
-  legendTitleSize = 13
-)
-
-doubletFinderResults
-
-qcresults <- as.data.frame(colData(sce))
-ggplot(qcresults, aes(x=soupX_contamination,y=decontX_contamination))+
-  geom_point()
 
 
-ggplot(qcresults, aes(x=decontX_contamination))+
-  geom_histogram()
+
 
 
 
