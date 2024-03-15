@@ -7,7 +7,7 @@ scripts/cache/*
 archive/
 .Rhistory
 .RData*
-
+archive/*
 
 .DS_Store
 
