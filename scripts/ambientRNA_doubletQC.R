@@ -26,6 +26,7 @@ inputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/cellranger/"
 outputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/sctk_qc/"
 dir.create(outputdir,showWarnings = FALSE)
 
+
 mad_outlier <- function(sobj, metric, nmads){
   M <- sobj@meta.data[[metric]]
   median_M <- median(M, na.rm = TRUE)
@@ -58,6 +59,7 @@ filter_by_counts <- function(sobj){
 }
 
 
+## Read raw counts
 samples <- c('w1118_42D', 'drprnull_42D')
 data_list <- sapply(samples, read_raw_sobj)
 
@@ -72,9 +74,11 @@ ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nF
   scale_color_viridis_c(option = "magma")+
   theme_classic()
 
+
+## Filter low quality cells
 data_list <- sapply(data_list, filter_by_counts)
 
-ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
+ggplot(as.data.frame(data_list1[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
   geom_point()+
   scale_color_viridis_c(option = "magma")+
   theme_classic()
@@ -84,9 +88,7 @@ ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nF
   scale_color_viridis_c(option = "magma")+
   theme_classic()
 
-
-FeatureScatter(data_list[1]$w1118_42D, feature1 = "nCount_RNA", feature2 = "nFeature_RNA", group.by="percent.mt")
-FeatureScatter(data_list[1]$w1118_42D, feature1 = "nCount_RNA", feature2 = "percent.mt")
+## Ambient RNA correction using SoupX
 
 get_soup_groups <- function(sobj){
   sobj <- NormalizeData(sobj, verbose = FALSE)
@@ -111,8 +113,6 @@ add_soup_groups <- function(sobj){
 data_list <- sapply(data_list, add_soup_groups)
 
 
-data_list[1]$w1118_42D[[]]
-
 make_soup <- function(sobj){
   inputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/cellranger/"
   sample_id <- as.character(sobj$sample_id[1]) #e.g, Lung1
@@ -135,6 +135,8 @@ make_soup <- function(sobj){
 
 data_list <- sapply(data_list, make_soup)
 
+###  Check SoupX correction - % of RNA removed
+
 sum(data_list[1]$w1118_42D@assays$original.counts@counts)
 sum(data_list[1]$w1118_42D@assays$RNA@counts)/sum(data_list[1]$w1118_42D@assays$original.counts@counts)*100
 
@@ -142,8 +144,16 @@ sum(data_list[2]$drprnull_42D@assays$original.counts@counts)
 sum(data_list[2]$drprnull_42D@assays$RNA@counts)/sum(data_list[2]$drprnull_42D@assays$original.counts@counts)*100
 
 
-DimPlot(data_list[2]$drprnull_42D)
-data_list[2]$drprnull_42D@meta.data
+DefaultAssay(data_list[2]$drprnull_42D) <- "original.counts"
+DefaultAssay(data_list[1]$w1118_42D) <- "original.counts"
+FeaturePlot(data_list[2]$drprnull_42D, features=c("elav","repo","drpr"))
+FeaturePlot(data_list[1]$w1118_42D, features=c("elav","repo","drpr"))
+
+DefaultAssay(data_list[2]$drprnull_42D) <- "RNA"
+DefaultAssay(data_list[1]$w1118_42D) <- "RNA"
+
+FeaturePlot(data_list[1]$w1118_42D, features=c("repo","drpr"), blend = TRUE)
+FeaturePlot(data_list[2]$drprnull_42D, features=c("repo","drpr"), blend = TRUE)
 
 ## Load raw w1118_42d counts
 
