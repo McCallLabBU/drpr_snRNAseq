@@ -1,6 +1,6 @@
 ####################################################################################
 # Run QC on drprnull42d and w111842d cells separately 
-# Estimate per-cell QC metrics, ambient RNA correction, and doublet detection using SCTK-QC and SoupX
+# Estimate per-cell QC metrics, ambient RNA correction, empty droplet and doublet detection using SCTK-QC and SoupX
 # Outputs AnnData .h5ad files for both samples separately
 # Code adpated from sanbomics, sc-bestpractices, and OSCA
 ####################################################################################
@@ -15,15 +15,20 @@ library(SoupX)
 library(reticulate)
 library(Seurat)
 library(viridis)
-adata <- import("anndata")
+library(robustbase)
+library(scater)
+library(scran)
+
+#adata <- import("anndata")
 #scrublet <- import("scrublet")
 set.seed(12345)
 
 
 ## Set up I/O
 
-inputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/cellranger/"
-outputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/sctk_qc/"
+basedir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/"
+inputdir <- paste0(basedir,"cellranger/")
+outputdir <- paste0(basedir,"preprocess/")
 dir.create(outputdir,showWarnings = FALSE)
 
 
@@ -50,6 +55,36 @@ read_raw_sobj <- function(sample_id){
   return(sobj)
 }
 
+flag_outliers <- function(sobj){
+  ncount_outlier <- mad_outlier(sobj, 'log1p_total_counts', 5) 
+  names(ncount_outlier) <- colnames(sobj)
+  sobj <- AddMetaData(object = sobj,metadata = ncount_outlier,col.name = 'nCount_outlier')
+  
+  nfeature_outlier <- mad_outlier(sobj, 'log1p_n_genes_by_counts', 5) 
+  names(nfeature_outlier) <- colnames(sobj)
+  sobj <- AddMetaData(object = sobj,metadata = nfeature_outlier,col.name = 'nFeature_outlier')
+  
+  mito_outlier <- mad_outlier(sobj, 'percent.mt', 3) 
+  names(mito_outlier) <- colnames(sobj)
+  sobj <- AddMetaData(object = sobj,metadata = mito_outlier,col.name = 'mt_outlier')
+}
+
+plot_outliers <- function(sobjmetadata){
+  ncount_outlier_plot <- ggplot(data = sobjmetadata, aes(x=sample_id,y=log1p_n_genes_by_counts,color=nFeature_outlier))+
+    #geom_violin(alpha=0.5)+
+    geom_jitter(alpha=0.5)+
+    theme_classic(base_size = 16)
+  nfeature_outlier_plot <- ggplot(data = sobjmetadata, aes(x=sample_id,y=log1p_total_counts,color=nCount_outlier))+
+    #geom_violin(alpha=0.5)+
+    geom_jitter(alpha=0.5)+
+    theme_classic(base_size = 16)
+  mt_outlier_plot <- ggplot(data = sobjmetadata, aes(x=sample_id,y=percent.mt,color=mt_outlier))+
+    #geom_violin(alpha=0.5)+
+    geom_jitter(alpha=0.5)+
+    theme_classic(base_size = 16)
+  return(ncount_outlier_plot+nfeature_outlier_plot+mt_outlier_plot)
+}
+
 filter_by_counts <- function(sobj){
   #find outliers and subset
   bool_vector <- !mad_outlier(sobj, 'log1p_total_counts', 5) & !mad_outlier(sobj, 'log1p_n_genes_by_counts', 5) & !mad_outlier(sobj, 'percent.mt', 3) 
@@ -59,34 +94,133 @@ filter_by_counts <- function(sobj){
 }
 
 
-## Read raw counts
+## Read raw counts and identify outliers
 samples <- c('w1118_42D', 'drprnull_42D')
 data_list <- sapply(samples, read_raw_sobj)
+data_list <- sapply(data_list, flag_outliers)
 
 
+## Plot features before filtering
 ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
   geom_point()+
+  ggtitle("W1118_42D")+
   scale_color_viridis_c(option = "magma")+
-  theme_classic()
+  theme_classic(base_size = 16)
 
 ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
   geom_point()+
+  ggtitle("drprnull_42D")+
   scale_color_viridis_c(option = "magma")+
-  theme_classic()
+  theme_classic(base_size = 16)
+
+## Plot outliers before filtering
+plot_outliers(data_list[1]$w1118_42D@meta.data)
+plot_outliers(data_list[2]$drprnull_42D@meta.data)
 
 
 ## Filter low quality cells
 data_list <- sapply(data_list, filter_by_counts)
 
-ggplot(as.data.frame(data_list1[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
+## Plot features after filtering
+
+ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
   geom_point()+
+  ggtitle("W1118_42D")+
   scale_color_viridis_c(option = "magma")+
-  theme_classic()
+  theme_classic(base_size = 16)
 
 ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
   geom_point()+
+  ggtitle("drprnull_42D")+
   scale_color_viridis_c(option = "magma")+
-  theme_classic()
+  theme_classic(base_size = 16)
+
+
+## Normalization
+data_list <- sapply(data_list, SCTransform)
+
+ggplot(data=data_list[1]$w1118_42D@meta.data,aes(x=nCount_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+
+ggplot(data=data_list[2]$drprnull_42D@meta.data,aes(x=nCount_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+
+ggplot(data=data_list[1]$w1118_42D@meta.data,aes(x=nFeature_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+
+ggplot(data=data_list[2]$drprnull_42D@meta.data,aes(x=nFeature_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+
+ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
+  geom_point()+
+  ggtitle("W1118_42D")+
+  scale_color_viridis_c(option = "magma")+
+  theme_classic(base_size = 16)
+
+ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
+  geom_point()+
+  ggtitle("drprnull_42D")+
+  scale_color_viridis_c(option = "magma")+
+  theme_classic(base_size = 16)
+
+
+## Clustering 
+
+run_clustering <- function(sobj){
+  sobj <- RunPCA(sobj, verbose = FALSE)
+  sobj <- RunUMAP(sobj, dims = 1:30, verbose = FALSE)
+  
+  sobj <- FindNeighbors(sobj, dims = 1:30, verbose = FALSE)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=1)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.8)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.2)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=1.5)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=2.5)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=3.5)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=4.5)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=8)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=12)
+  return(sobj)
+}
+
+data_list <- sapply(data_list, run_clustering)
+
+cluster_res <- c("SCT_snn_res.0.2","SCT_snn_res.0.8","SCT_snn_res.1","SCT_snn_res.1.5","SCT_snn_res.2.5",
+                 "SCT_snn_res.3.5","SCT_snn_res.4.5","SCT_snn_res.8","SCT_snn_res.12")
+
+markers <- c("elav","lncRNA:noe","VAChT","VGlut","Gad1","Vmat","SerT","Tdc2","ple", # neurons
+             "repo","lncRNA:CR34335","alrm","wrapper","Indy","moody",#glia 
+             "ninaC",	"trp",	"trpl", #photoreceptors
+             "Hml", #hemocytes
+             "ppl",#fatbody
+             "drpr")
+for(cr in cluster_res){
+  p1 <- DimPlot(data_list[1]$w1118_42D,group.by = cr) &
+    theme_classic(base_size = 16)
+  
+  p2 <- DimPlot(data_list[2]$drprnull_42D,group.by = cr)&
+    theme_classic(base_size = 16)
+  
+  p3 <- DotPlot(data_list[1]$w1118_42D, features = markers, group.by = cr)&
+    scale_color_viridis_c(option = "magma",direction = -1)&
+    theme_classic(base_size = 16) + RotatedAxis()
+  
+  p4 <- DotPlot(data_list[2]$drprnull_42D, features = markers, group.by = cr)&
+    scale_color_viridis_c(option = "magma",direction = -1)&
+    theme_classic(base_size = 16)+ RotatedAxis()
+  
+  clustering_plots <- list(p1,p2,p3,p4)
+  #pdf(paste0(outputdir,"figures/","clusters.pdf"))
+  clustering_plots
+  #dev.off()
+}
+
+
+
 
 ## Ambient RNA correction using SoupX
 
@@ -112,10 +246,9 @@ add_soup_groups <- function(sobj){
 
 data_list <- sapply(data_list, add_soup_groups)
 
-
 make_soup <- function(sobj){
   inputdir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/cellranger/"
-  sample_id <- as.character(sobj$sample_id[1]) #e.g, Lung1
+  sample_id <- as.character(sobj$sample_id[1]) 
   path <- paste0(inputdir,sample_id, "/outs/raw_feature_bc_matrix/")
   raw <- Read10X(data.dir = path)
   
@@ -124,10 +257,11 @@ make_soup <- function(sobj){
   sc = autoEstCont(sc, doPlot=FALSE)
   out = adjustCounts(sc, roundToInt = TRUE)
   
-  #optional keep original
-  sobj[["original.counts"]] <- CreateAssayObject(counts = sobj@assays$RNA@counts)
+  #save SoupX corrected counts
+  #sobj[["original.counts"]] <- CreateAssayObject(counts = sobj@assays$RNA@counts)
+  #sobj@assays$RNA@counts <- out
+  sobj[["soupXcounts"]] <- CreateAssayObject(counts = out)
   
-  sobj@assays$RNA@counts <- out
   
   return(sobj)
   
@@ -137,11 +271,15 @@ data_list <- sapply(data_list, make_soup)
 
 ###  Check SoupX correction - % of RNA removed
 
-sum(data_list[1]$w1118_42D@assays$original.counts@counts)
-sum(data_list[1]$w1118_42D@assays$RNA@counts)/sum(data_list[1]$w1118_42D@assays$original.counts@counts)*100
+sum(data_list[1]$w1118_42D@assays$RNA@counts)
+sum(data_list[1]$w1118_42D@assays$soupXcounts@counts)/sum(data_list[1]$w1118_42D@assays$RNA@counts)*100
 
-sum(data_list[2]$drprnull_42D@assays$original.counts@counts)
-sum(data_list[2]$drprnull_42D@assays$RNA@counts)/sum(data_list[2]$drprnull_42D@assays$original.counts@counts)*100
+sum(data_list[2]$drprnull_42D@assays$RNA@counts)
+sum(data_list[2]$drprnull_42D@assays$soupXcounts@counts)/sum(data_list[2]$drprnull_42D@assays$RNA@counts)*100
+
+## Convert Seurat objects to SingleCellExperiment objects
+data_list_sce <- sapply(data_list, as.SingleCellExperiment)
+
 
 
 DefaultAssay(data_list[2]$drprnull_42D) <- "original.counts"
@@ -154,6 +292,8 @@ DefaultAssay(data_list[1]$w1118_42D) <- "RNA"
 
 FeaturePlot(data_list[1]$w1118_42D, features=c("repo","drpr"), blend = TRUE)
 FeaturePlot(data_list[2]$drprnull_42D, features=c("repo","drpr"), blend = TRUE)
+
+
 
 ## Load raw w1118_42d counts
 
@@ -172,9 +312,6 @@ w1118_42d_samples <- colData(w1118_42d)$sample
 w1118_42d <- runCellQC(w1118_42d, 
                        algorithms = c("QCMetrics","doubletFinder", "decontX","cxds", "bcds", "cxds_bcds_hybrid"), 
                        sample = w1118_42d_samples)
-
-
-
 
 
 drprnull_42d <- importCellRangerV3(
