@@ -19,6 +19,7 @@ library(robustbase)
 library(scater)
 library(scran)
 
+
 #adata <- import("anndata")
 #scrublet <- import("scrublet")
 set.seed(12345)
@@ -31,6 +32,7 @@ inputdir <- paste0(basedir,"cellranger/")
 outputdir <- paste0(basedir,"preprocess/")
 dir.create(outputdir,showWarnings = FALSE)
 
+## Function definitions
 
 mad_outlier <- function(sobj, metric, nmads){
   M <- sobj@meta.data[[metric]]
@@ -69,6 +71,38 @@ flag_outliers <- function(sobj){
   sobj <- AddMetaData(object = sobj,metadata = mito_outlier,col.name = 'mt_outlier')
 }
 
+plot_features <- function(sobjmetadata){
+  p0 <- ggplot(as.data.frame(sobjmetadata), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
+    geom_point()+
+    scale_color_viridis_c(option = "magma")+
+    theme_classic(base_size = 16)
+  
+  p1 <- ggplot(as.data.frame(sobjmetadata),aes(x=nCount_RNA))+
+    geom_histogram()+
+    theme_classic(base_size = 16)
+  
+  p2 <- ggplot(as.data.frame(sobjmetadata),aes(x=nFeature_RNA))+
+    geom_histogram()+
+    theme_classic(base_size = 16)
+  
+  p3 <- ggplot(as.data.frame(sobjmetadata),aes(x=log1p_total_counts))+
+    geom_histogram()+
+    theme_classic(base_size = 16)
+  
+  p4 <- ggplot(as.data.frame(sobjmetadata),aes(x=log1p_n_genes_by_counts))+
+    geom_histogram()+
+    theme_classic(base_size = 16)
+  
+  p5 <- ggplot(as.data.frame(sobjmetadata), aes(x=percent.mt))+
+    geom_histogram(bins=20)+
+    theme_classic(base_size = 16)
+  
+  #featureplots <- list(p0,p1,p2,p3,p4,p5)
+  p0+p1+p2+p3+p4+p5 
+  
+  
+}
+
 plot_outliers <- function(sobjmetadata){
   ncount_outlier_plot <- ggplot(data = sobjmetadata, aes(x=sample_id,y=log1p_n_genes_by_counts,color=nFeature_outlier))+
     #geom_violin(alpha=0.5)+
@@ -89,7 +123,7 @@ filter_by_counts <- function(sobj){
   #find outliers and subset
   bool_vector <- !mad_outlier(sobj, 'log1p_total_counts', 5) & !mad_outlier(sobj, 'log1p_n_genes_by_counts', 5) & !mad_outlier(sobj, 'percent.mt', 3) 
   sobj <- subset(sobj, cells = which(bool_vector))
-  sobj <- subset(sobj, subset = percent.mt < 8)
+  sobj <- subset(sobj, subset = percent.mt < 1) ## Remove cells with percent.mt > 1% because mito counts in snRNAseq indicates incomplete cell lysis.
   return(sobj)
 }
 
@@ -101,45 +135,26 @@ data_list <- sapply(data_list, flag_outliers)
 
 
 ## Plot features before filtering
-ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
-  geom_point()+
-  ggtitle("W1118_42D")+
-  scale_color_viridis_c(option = "magma")+
-  theme_classic(base_size = 16)
+plot_features(data_list[1]$w1118_42D@meta.data)
+plot_features(data_list[2]$drprnull_42D@meta.data)
 
-ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
-  geom_point()+
-  ggtitle("drprnull_42D")+
-  scale_color_viridis_c(option = "magma")+
-  theme_classic(base_size = 16)
 
 ## Plot outliers before filtering
 plot_outliers(data_list[1]$w1118_42D@meta.data)
 plot_outliers(data_list[2]$drprnull_42D@meta.data)
 
-
 ## Filter low quality cells
 data_list <- sapply(data_list, filter_by_counts)
 
 ## Plot features after filtering
-
-ggplot(as.data.frame(data_list[1]$w1118_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
-  geom_point()+
-  ggtitle("W1118_42D")+
-  scale_color_viridis_c(option = "magma")+
-  theme_classic(base_size = 16)
-
-ggplot(as.data.frame(data_list[2]$drprnull_42D@meta.data), aes(x=nCount_RNA,y=nFeature_RNA, color=percent.mt))+
-  geom_point()+
-  ggtitle("drprnull_42D")+
-  scale_color_viridis_c(option = "magma")+
-  theme_classic(base_size = 16)
-
+plot_features(data_list[1]$w1118_42D@meta.data)
+plot_features(data_list[2]$drprnull_42D@meta.data)
 
 ## Normalization
-data_list <- sapply(data_list, SCTransform)
+data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt")
 
-ggplot(data=data_list[1]$w1118_42D@meta.data,aes(x=nCount_SCT))+
+
+ggplot(data=data_list[1]$w1118_42D@meta.data,aes(x=log10(nCount_SCT)))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
@@ -175,9 +190,11 @@ run_clustering <- function(sobj){
   sobj <- RunUMAP(sobj, dims = 1:30, verbose = FALSE)
   
   sobj <- FindNeighbors(sobj, dims = 1:30, verbose = FALSE)
-  sobj <- FindClusters(sobj, verbose = FALSE, resolution=1)
-  sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.8)
+  
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.02)
   sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.2)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=0.8)
+  sobj <- FindClusters(sobj, verbose = FALSE, resolution=1)
   sobj <- FindClusters(sobj, verbose = FALSE, resolution=1.5)
   sobj <- FindClusters(sobj, verbose = FALSE, resolution=2.5)
   sobj <- FindClusters(sobj, verbose = FALSE, resolution=3.5)
@@ -189,7 +206,7 @@ run_clustering <- function(sobj){
 
 data_list <- sapply(data_list, run_clustering)
 
-cluster_res <- c("SCT_snn_res.0.2","SCT_snn_res.0.8","SCT_snn_res.1","SCT_snn_res.1.5","SCT_snn_res.2.5",
+cluster_res <- c("SCT_snn_res.0.02","SCT_snn_res.0.2","SCT_snn_res.0.8","SCT_snn_res.1","SCT_snn_res.1.5","SCT_snn_res.2.5",
                  "SCT_snn_res.3.5","SCT_snn_res.4.5","SCT_snn_res.8","SCT_snn_res.12")
 
 markers <- c("elav","lncRNA:noe","VAChT","VGlut","Gad1","Vmat","SerT","Tdc2","ple", # neurons
@@ -198,27 +215,32 @@ markers <- c("elav","lncRNA:noe","VAChT","VGlut","Gad1","Vmat","SerT","Tdc2","pl
              "Hml", #hemocytes
              "ppl",#fatbody
              "drpr")
+
+
 for(cr in cluster_res){
   p1 <- DimPlot(data_list[1]$w1118_42D,group.by = cr) &
     theme_classic(base_size = 16)
   
+  ggsave(p1,filename=paste0(outputdir,"figures/","w1118_42d",cr,"_dimplot.pdf"),width=10,height=10)
+  
   p2 <- DimPlot(data_list[2]$drprnull_42D,group.by = cr)&
     theme_classic(base_size = 16)
+  
+  ggsave(p2,filename=paste0(outputdir,"figures/","drprnull_42d",cr,"_dimplot.pdf"),width=10,height=10)
   
   p3 <- DotPlot(data_list[1]$w1118_42D, features = markers, group.by = cr)&
     scale_color_viridis_c(option = "magma",direction = -1)&
     theme_classic(base_size = 16) + RotatedAxis()
   
+  ggsave(p3,filename=paste0(outputdir,"figures/","w1118_42d",cr,"_dotplot.pdf"), width=16,height=10)
+  
   p4 <- DotPlot(data_list[2]$drprnull_42D, features = markers, group.by = cr)&
     scale_color_viridis_c(option = "magma",direction = -1)&
     theme_classic(base_size = 16)+ RotatedAxis()
   
-  clustering_plots <- list(p1,p2,p3,p4)
-  #pdf(paste0(outputdir,"figures/","clusters.pdf"))
-  clustering_plots
-  #dev.off()
+  ggsave(p4,filename=paste0(outputdir,"figures/","drprnull_42d",cr,"_dotplot.pdf"), width=16,height=10)
+  
 }
-
 
 
 
@@ -239,8 +261,8 @@ get_soup_groups <- function(sobj){
 }
 
 add_soup_groups <- function(sobj){
-  sobj <- get_soup_groups(sobj)
-  sobj$soup_group <- sobj@meta.data[['seurat_clusters']]
+  #sobj <- get_soup_groups(sobj)
+  sobj$soup_group <- sobj@meta.data[['SCT_snn_res.0.8']] ## Use Clusters from SCT normalized assay
   return(sobj)
 }
 
@@ -257,10 +279,11 @@ make_soup <- function(sobj){
   sc = autoEstCont(sc, doPlot=FALSE)
   out = adjustCounts(sc, roundToInt = TRUE)
   
-  #save SoupX corrected counts
+
+  
   #sobj[["original.counts"]] <- CreateAssayObject(counts = sobj@assays$RNA@counts)
   #sobj@assays$RNA@counts <- out
-  sobj[["soupXcounts"]] <- CreateAssayObject(counts = out)
+  sobj[["soupXcounts"]] <- CreateAssayObject(counts = out)   #save SoupX corrected counts
   
   
   return(sobj)
@@ -366,10 +389,6 @@ writeH5AD(
   skip_assays = FALSE,
   compression = "none"
 )
-
-
-
-
 
 
 writeH5AD(
