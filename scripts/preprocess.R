@@ -278,6 +278,7 @@ sum(data_list[2]$drprnull_42d@assays$soupXcounts@counts)/sum(data_list[2]$drprnu
 
 
 ## Normalization
+### Perform scTransform normalization on raw counts, soupX corrected counts, and decontX corrected counts
 data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="originalexp", new.assay.name="SCT")
 data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="soupXcounts", new.assay.name="soupX_SCT")
 data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="decontXcounts", new.assay.name="decontX_SCT")
