@@ -9,7 +9,7 @@ module load cellranger/6.1.2
 cd /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/reference/
 
 #Remove previous runs
-rm -rf /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/reference/BDGP6.32.109
+#rm -rf /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/reference/BDGP6.32.109
 
 
 cellranger mkgtf /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/reference/Drosophila_melanogaster.BDGP6.32.109.gtf /projectnb/mccall/sbandyadka/drpr42d_snrnaseq/reference/Drosophila_melanogaster.BDGP6.32.109.filtered.gtf \

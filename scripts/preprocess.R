@@ -32,7 +32,7 @@ basedir <- "/projectnb/mccall/sbandyadka/drpr42d_snrnaseq/analysis/"
 inputdir <- paste0(basedir,"cellranger/")
 outputdir <- paste0(basedir,"preprocess/")
 dir.create(outputdir,showWarnings = FALSE)
-
+dir.create(paste0(outputdir,"figures"),showWarnings = FALSE)
 
 ## Load raw w1118_42d counts
 
@@ -202,7 +202,7 @@ plot_features(data_list[2]$drprnull_42d@meta.data)
 plot_outliers(data_list[1]$w1118_42d@meta.data)
 plot_outliers(data_list[2]$drprnull_42d@meta.data)
 
-### Removing percent.mt > 0.5% cells in drpr sample removes more than half the samples. Finding a more relaxed threshold
+### Removing percent.mt > 1% cells in drpr sample removes more than half the samples. Finding a more relaxed threshold
 drpr_percentmt_filter <- as.data.frame(data_list[2]$drprnull_42d@meta.data) %>%
   filter(percent.mt <5)
 print(dim(drpr_percentmt_filter))
