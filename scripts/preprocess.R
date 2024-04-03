@@ -280,17 +280,17 @@ sum(data_list[2]$drprnull_42d@assays$soupXcounts@counts)/sum(data_list[2]$drprnu
 
 ## Normalization
 ### Perform scTransform normalization on raw counts, soupX corrected counts, and decontX corrected counts
-data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="originalexp", new.assay.name="SCT")
-data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="soupXcounts", new.assay.name="soupX_SCT")
-data_list <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="decontXcounts", new.assay.name="decontX_SCT")
+data_list_normed <- sapply(data_list, SCTransform, vars.to.regress ="percent.mt",assay="originalexp", new.assay.name="SCT")
+data_list_normed <- sapply(data_list_normed, SCTransform, vars.to.regress ="percent.mt",assay="soupXcounts", new.assay.name="soupX_SCT")
+data_list_normed <- sapply(data_list_normed, SCTransform, vars.to.regress ="percent.mt",assay="decontXcounts", new.assay.name="decontX_SCT")
 
-p1 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nCount_SCT))+
+p1 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nCount_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
-p2 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nFeature_SCT))+
+p2 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nFeature_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
-p3 <- ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
+p3 <- ggplot(as.data.frame(data_list_normed[1]$w1118_42d@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
   geom_point()+
   ggtitle("W1118_42D")+
   scale_color_viridis_c(option = "magma")+
@@ -298,28 +298,13 @@ p3 <- ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_SCT,y
 
 p1+p2+p3
 
-p1 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nCount_soupX_SCT))+
+p1 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nCount_soupX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
-p2 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nFeature_soupX_SCT))+
+p2 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nFeature_soupX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
-p3 <- ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=percent.mt))+
-  geom_point()+
-  ggtitle("W1118_42D")+
-  scale_color_viridis_c(option = "magma")+
-  theme_classic(base_size = 16)
-
-p1+p2+p3
-
-
-p1 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nCount_decontX_SCT))+
-  geom_histogram()+
-  theme_classic(base_size = 16)
-p2 <- ggplot(data=data_list[1]$w1118_42d@meta.data,aes(x=nFeature_decontX_SCT))+
-  geom_histogram()+
-  theme_classic(base_size = 16)
-p3 <- ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_decontX_SCT,y=nFeature_decontX_SCT, color=percent.mt))+
+p3 <- ggplot(as.data.frame(data_list_normed[1]$w1118_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=percent.mt))+
   geom_point()+
   ggtitle("W1118_42D")+
   scale_color_viridis_c(option = "magma")+
@@ -328,15 +313,30 @@ p3 <- ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_decon
 p1+p2+p3
 
 
-p1 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nCount_SCT))+
+p1 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nCount_decontX_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+p2 <- ggplot(data=data_list_normed[1]$w1118_42d@meta.data,aes(x=nFeature_decontX_SCT))+
+  geom_histogram()+
+  theme_classic(base_size = 16)
+p3 <- ggplot(as.data.frame(data_list_normed[1]$w1118_42d@meta.data), aes(x=nCount_decontX_SCT,y=nFeature_decontX_SCT, color=percent.mt))+
+  geom_point()+
+  ggtitle("W1118_42D")+
+  scale_color_viridis_c(option = "magma")+
+  theme_classic(base_size = 16)
+
+p1+p2+p3
+
+
+p1 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nCount_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p2 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nFeature_SCT))+
+p2 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nFeature_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
+p3 <- ggplot(as.data.frame(data_list_normed[2]$drprnull_42d@meta.data), aes(x=nCount_SCT,y=nFeature_SCT, color=percent.mt))+
   geom_point()+
   ggtitle("drprnull_42D")+
   scale_color_viridis_c(option = "magma")+
@@ -344,15 +344,15 @@ p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_SC
 
 p1+p2+p3
 
-p1 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nCount_soupX_SCT))+
+p1 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nCount_soupX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p2 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nFeature_soupX_SCT))+
+p2 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nFeature_soupX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=percent.mt))+
+p3 <- ggplot(as.data.frame(data_list_normed[2]$drprnull_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=percent.mt))+
   geom_point()+
   ggtitle("drprnull_42D")+
   scale_color_viridis_c(option = "magma")+
@@ -360,15 +360,15 @@ p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_so
 
 p1+p2+p3
 
-p1 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nCount_decontX_SCT))+
+p1 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nCount_decontX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p2 <- ggplot(data=data_list[2]$drprnull_42d@meta.data,aes(x=nFeature_decontX_SCT))+
+p2 <- ggplot(data=data_list_normed[2]$drprnull_42d@meta.data,aes(x=nFeature_decontX_SCT))+
   geom_histogram()+
   theme_classic(base_size = 16)
 
-p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_decontX_SCT,y=nFeature_decontX_SCT, color=percent.mt))+
+p3 <- ggplot(as.data.frame(data_list_normed[2]$drprnull_42d@meta.data), aes(x=nCount_decontX_SCT,y=nFeature_decontX_SCT, color=percent.mt))+
   geom_point()+
   ggtitle("drprnull_42D")+
   scale_color_viridis_c(option = "magma")+
@@ -377,13 +377,13 @@ p3 <- ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_de
 p1+p2+p3
 
 
-ggplot(as.data.frame(data_list[1]$w1118_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=scds_hybrid_call))+
+ggplot(as.data.frame(data_list_normed[1]$w1118_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=scds_hybrid_call))+
   geom_point()+
   ggtitle("w1118_42d")+
   #scale_color_viridis_c(option = "magma")+
   theme_classic(base_size = 16)
 
-ggplot(as.data.frame(data_list[2]$drprnull_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=scds_hybrid_call))+
+ggplot(as.data.frame(data_list_normed[2]$drprnull_42d@meta.data), aes(x=nCount_soupX_SCT,y=nFeature_soupX_SCT, color=scds_hybrid_call))+
   geom_point()+
   ggtitle("drprnull_42d")+
   #scale_color_viridis_c(option = "magma")+
@@ -412,19 +412,19 @@ run_clustering <- function(sobj){
 }
 
 ### Run clustering on scTransformed raw counts
-DefaultAssay(data_list[1]$w1118_42d)="SCT"
-DefaultAssay(data_list[2]$drprnull_42d)="SCT"
-data_list <- sapply(data_list, run_clustering)
+DefaultAssay(data_list_normed[1]$w1118_42d)="SCT"
+DefaultAssay(data_list_normed[2]$drprnull_42d)="SCT"
+data_list_normed <- sapply(data_list_normed, run_clustering)
 
 ### Run clustering on scTransformed soupX corrected counts
-DefaultAssay(data_list[1]$w1118_42d)="soupX_SCT"
-DefaultAssay(data_list[2]$drprnull_42d)="soupX_SCT"
-data_list <- sapply(data_list, run_clustering)
+DefaultAssay(data_list_normed[1]$w1118_42d)="soupX_SCT"
+DefaultAssay(data_list_normed[2]$drprnull_42d)="soupX_SCT"
+data_list_normed <- sapply(data_list_normed, run_clustering)
 
 ### Run clustering on scTransformed decontX corrected counts
-DefaultAssay(data_list[1]$w1118_42d)="decontX_SCT"
-DefaultAssay(data_list[2]$drprnull_42d)="decontX_SCT"
-data_list <- sapply(data_list, run_clustering)
+DefaultAssay(data_list_normed[1]$w1118_42d)="decontX_SCT"
+DefaultAssay(data_list_normed[2]$drprnull_42d)="decontX_SCT"
+data_list_normed <- sapply(data_list_normed, run_clustering)
 
 ### Plot UMAP and marker gene dotplots for each correction/clustering resolution combination
 norm_methods <- c("SCT","soupX_SCT","decontX_SCT")
@@ -441,23 +441,23 @@ markers <- c("elav","lncRNA:noe","VAChT","VGlut","Gad1","Vmat","SerT","Tdc2","pl
 for(nm in norm_methods){
   for(cr in cluster_res){
     nmcr <- paste0(nm,"_",cr)
-    p1 <- DimPlot(data_list[1]$w1118_42d,group.by = nmcr) &
+    p1 <- DimPlot(data_list_normed[1]$w1118_42d,group.by = nmcr) &
       theme_classic(base_size = 16)
     
     ggsave(p1,filename=paste0(outputdir,"figures/","w1118_42d_",nmcr,"_dimplot.pdf"),width=10,height=10)
     
-    p2 <- DimPlot(data_list[2]$drprnull_42d,group.by = nmcr)&
+    p2 <- DimPlot(data_list_normed[2]$drprnull_42d,group.by = nmcr)&
       theme_classic(base_size = 16)
     
     ggsave(p2,filename=paste0(outputdir,"figures/","drprnull_42d_",nmcr,"_dimplot.pdf"),width=10,height=10)
     
-    p3 <- DotPlot(data_list[1]$w1118_42d, features = markers, group.by = nmcr)&
+    p3 <- DotPlot(data_list_normed[1]$w1118_42d, features = markers, group.by = nmcr)&
       scale_color_viridis_c(option = "magma",direction = -1)&
       theme_classic(base_size = 16) + RotatedAxis()
     
     ggsave(p3,filename=paste0(outputdir,"figures/","w1118_42d_",nmcr,"_dotplot.pdf"), width=16,height=10)
     
-    p4 <- DotPlot(data_list[2]$drprnull_42d, features = markers, group.by = nmcr)&
+    p4 <- DotPlot(data_list_normed[2]$drprnull_42d, features = markers, group.by = nmcr)&
       scale_color_viridis_c(option = "magma",direction = -1)&
       theme_classic(base_size = 16)+ RotatedAxis()
     
@@ -466,22 +466,29 @@ for(nm in norm_methods){
   }
 }
 
-
+DefaultAssay(data_list_normed[1]$w1118_42d)="originalexp"
+DefaultAssay(data_list_normed[2]$drprnull_42d)="originalexp"
 ## Save seurat objects together
 
-saveRDS(data_list, file=paste0(outputdir,"data_list.RDS"))
-
+saveRDS(data_list_normed, file=paste0(outputdir,"data_list.RDS"))
 
 
 ## Save seurat objects as h5ad files separately
 
-
-SaveH5Seurat(data_list[1]$w1118_42d, filename = paste0(outputdir,"w1118_42d.h5Seurat"))
+SaveH5Seurat(data_list_normed[1]$w1118_42d, filename = paste0(outputdir,"w1118_42d.h5Seurat"))
 Convert(paste0(outputdir,"w1118_42d.h5Seurat"), dest = paste0(outputdir,"w1118_42d.h5ad"))
 
-SaveH5Seurat(data_list[2]$drprnull_42d, filename = paste0(outputdir,"drprnull_42d.h5Seurat"))
+SaveH5Seurat(data_list_normed[2]$drprnull_42d, filename = paste0(outputdir,"drprnull_42d.h5Seurat"))
 Convert(paste0(outputdir,"drprnull_42d.h5Seurat"), dest = paste0(outputdir,"drprnull_42d.h5ad"))
 
+## Save h5ad without scale.data to export full list of genes
+w1118_42d_slim <- DietSeurat(object = data_list_normed[1]$w1118_42d, counts = T, data = T, scale.data = F)
+SaveH5Seurat(w1118_42d_slim, filename = paste0(outputdir,"w1118_42d_slim.h5Seurat"))
+Convert(paste0(outputdir,"w1118_42d_slim.h5Seurat"), dest = paste0(outputdir,"w1118_42d_slim.h5ad"))
+
+drprnull_42d_slim <- DietSeurat(object = data_list_normed[2]$drprnull_42d, counts = T, data = T, scale.data = F)
+SaveH5Seurat(drprnull_42d_slim, filename = paste0(outputdir,"drprnull_42d_slim.h5Seurat"))
+Convert(paste0(outputdir,"drprnull_42d_slim.h5Seurat"), dest = paste0(outputdir,"drprnull_42d_slim.h5ad"))
 
 ## Save SCTK-QC intermediate SCE objects as h5ad files 
 
@@ -506,6 +513,8 @@ writeH5AD(
 
 
 sessionInfo()
+
+
 
 
 
